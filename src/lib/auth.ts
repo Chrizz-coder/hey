@@ -1,9 +1,17 @@
-import NextAuth from "next-auth"
+import NextAuth, { getServerSession, type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import db from "./db"
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+interface UserRow {
+  id: number
+  email: string
+  name: string
+  password_hash: string
+  role: string
+}
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -18,13 +26,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = db.prepare(
           'SELECT * FROM users WHERE email = ?'
-        ).get(credentials.email) as any
+        ).get(credentials.email) as UserRow | undefined
 
         if (!user) {
           return null
         }
 
-        const isValid = await compare(credentials.password as string, user.password_hash)
+        const isValid = await compare(credentials.password, user.password_hash)
 
         if (!isValid) {
           return null
@@ -56,10 +64,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }
   },
   pages: {
-    signIn: "/auth/signin",
-    signUp: "/auth/signup"
+    signIn: "/auth/signin"
   },
   session: {
     strategy: "jwt"
   }
-})
+}
+
+const handler = NextAuth(authOptions)
+
+export const handlers = { GET: handler, POST: handler }
+
+export const auth = () => getServerSession(authOptions)

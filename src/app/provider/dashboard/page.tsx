@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/useNotifications'
@@ -24,15 +24,6 @@ interface Booking {
   status: string
 }
 
-interface Notification {
-  id: number
-  type: string
-  title: string
-  message: string
-  is_read: number
-  created_at: string
-}
-
 export default function ProviderDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -43,6 +34,26 @@ export default function ProviderDashboard() {
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchData = useCallback(() => {
+    return Promise.all([
+      fetch('/api/services?provider=true'),
+      fetch('/api/bookings')
+    ])
+      .then(async ([servicesRes, bookingsRes]) => {
+        if (servicesRes.ok) {
+          setServices(await servicesRes.json())
+        }
+
+        if (bookingsRes.ok) {
+          setBookings(await bookingsRes.json())
+        }
+
+        refreshNotifications()
+      })
+      .catch((error) => console.error('Failed to fetch data:', error))
+      .finally(() => setLoading(false))
+  }, [refreshNotifications])
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
@@ -51,32 +62,7 @@ export default function ProviderDashboard() {
     } else if (session) {
       fetchData()
     }
-  }, [session, status, router])
-
-  const fetchData = async () => {
-    try {
-      const [servicesRes, bookingsRes] = await Promise.all([
-        fetch('/api/services?provider=true'),
-        fetch('/api/bookings')
-      ])
-
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json()
-        setServices(servicesData)
-      }
-
-      if (bookingsRes.ok) {
-        const bookingsData = await bookingsRes.json()
-        setBookings(bookingsData)
-      }
-
-      refreshNotifications()
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [session, status, router, fetchData])
 
   const handleDeleteService = async (id: number) => {
     if (!confirm('Are you sure you want to delete this service?')) return

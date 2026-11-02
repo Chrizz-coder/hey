@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@/lib/auth'
 import db from '@/lib/db'
 
-export async function GET(request: Request) {
+export async function GET() {
+  await connection()
+
   try {
     const session = await auth()
     if (!session) {

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       JOIN users u2 ON b.provider_id = u2.id
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: (string | number)[] = []
 
     if (session.user.role === 'customer') {
       query += ' AND b.customer_id = ?'
@@ -55,18 +55,21 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { provider_id, service_id, scheduled_date, description, estimated_duration } = body
 
-    if (!provider_id || !service_id || !scheduled_date) {
+    if (!service_id || !scheduled_date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Get service to verify it exists and get the provider
-    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(service_id) as any
+    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(service_id) as { provider_id: number | null } | undefined
     if (!service) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 })
     }
 
     // Use the service's provider_id if not specified
     const finalProviderId = provider_id || service.provider_id
+    if (!finalProviderId) {
+      return NextResponse.json({ error: 'This service has no provider yet' }, { status: 400 })
+    }
 
     // Create booking
     const result = db.prepare(`

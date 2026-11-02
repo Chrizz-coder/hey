@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       FROM providers p 
       JOIN services s ON p.service_id = s.id
     `;
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (serviceId) {
       query += ' WHERE p.service_id = ?';
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     const providers = db.prepare(query).all(...params);
     return NextResponse.json(providers);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch providers' }, { status: 500 });
   }
 }

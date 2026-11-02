@@ -4,7 +4,7 @@ import db from '@/lib/db'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -12,7 +12,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const notificationId = parseInt(params.id)
+    const notificationId = parseInt((await params).id)
 
     db.prepare(`
       UPDATE notifications
