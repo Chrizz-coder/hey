@@ -217,6 +217,8 @@ if (serviceCount.count === 0) {
       'provider',
       '555-9999'
     );
+    db.prepare('UPDATE services SET provider_id = ? WHERE provider_id IS NULL').run(providerUser.lastInsertRowid);
+
     insertProviderProfile.run(
       providerUser.lastInsertRowid,
       'Test Provider Business',

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { provider_id, service_id, scheduled_date, description, estimated_duration } = body
 
-    if (!provider_id || !service_id || !scheduled_date) {
+    if (!service_id || !scheduled_date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -67,6 +67,9 @@ export async function POST(request: Request) {
 
     // Use the service's provider_id if not specified
     const finalProviderId = provider_id || service.provider_id
+    if (!finalProviderId) {
+      return NextResponse.json({ error: 'This service has no provider yet' }, { status: 400 })
+    }
 
     // Create booking
     const result = db.prepare(`
