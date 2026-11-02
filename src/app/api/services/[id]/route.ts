@@ -4,7 +4,7 @@ import db from '@/lib/db';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -12,12 +12,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const serviceId = parseInt(params.id);
+    const serviceId = parseInt((await params).id);
     const body = await request.json();
     const { name, description, category, icon, price_range, is_active } = body;
 
     // Verify ownership
-    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(serviceId) as any;
+    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(serviceId) as { provider_id: number | null } | undefined;
     if (!service) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
@@ -49,7 +49,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -57,10 +57,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const serviceId = parseInt(params.id);
+    const serviceId = parseInt((await params).id);
 
     // Verify ownership
-    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(serviceId) as any;
+    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(serviceId) as { provider_id: number | null } | undefined;
     if (!service) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }

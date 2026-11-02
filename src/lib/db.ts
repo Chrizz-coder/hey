@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { hashSync } from 'bcryptjs';
 
 const dbPath = path.join(process.cwd(), 'data', 'services.db');
 const db = new Database(dbPath);
@@ -140,8 +141,8 @@ db.exec(`
 const serviceCount = db.prepare('SELECT COUNT(*) as count FROM services').get() as { count: number };
 if (serviceCount.count === 0) {
   const insertService = db.prepare(`
-    INSERT INTO services (name, description, category, icon) 
-    VALUES (?, ?, ?, ?)
+    INSERT INTO services (name, description, category, icon, provider_id, price_range, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
   const services = [
@@ -192,7 +193,6 @@ if (serviceCount.count === 0) {
   // Seed test users (for development)
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
   if (userCount.count === 0) {
-    const { hash } = require('bcryptjs');
     const insertUser = db.prepare(`
       INSERT INTO users (email, name, password_hash, role, phone)
       VALUES (?, ?, ?, ?, ?)
@@ -209,7 +209,7 @@ if (serviceCount.count === 0) {
     `);
 
     // Create test provider
-    const providerPassword = hash('provider123', 10);
+    const providerPassword = hashSync('provider123', 10);
     const providerUser = insertUser.run(
       'provider@test.com',
       'Test Provider',
@@ -228,7 +228,7 @@ if (serviceCount.count === 0) {
     );
 
     // Create test customer
-    const customerPassword = hash('customer123', 10);
+    const customerPassword = hashSync('customer123', 10);
     const customerUser = insertUser.run(
       'customer@test.com',
       'Test Customer',

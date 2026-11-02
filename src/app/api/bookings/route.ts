@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       JOIN users u2 ON b.provider_id = u2.id
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: (string | number)[] = []
 
     if (session.user.role === 'customer') {
       query += ' AND b.customer_id = ?'
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     // Get service to verify it exists and get the provider
-    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(service_id) as any
+    const service = db.prepare('SELECT provider_id FROM services WHERE id = ?').get(service_id) as { provider_id: number | null } | undefined
     if (!service) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 })
     }

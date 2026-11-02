@@ -13,19 +13,18 @@ export function useNotifications(userId: string | undefined, enabled: boolean = 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
-  const fetchNotifications = useCallback(async () => {
-    if (!userId || !enabled) return
+  const fetchNotifications = useCallback(() => {
+    if (!userId || !enabled) return Promise.resolve()
 
-    try {
-      const res = await fetch('/api/notifications')
-      if (res.ok) {
-        const data = await res.json()
-        setNotifications(data)
-        setUnreadCount(data.filter((n: Notification) => n.is_read === 0).length)
-      }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error)
-    }
+    return fetch('/api/notifications')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: Notification[] | null) => {
+        if (data) {
+          setNotifications(data)
+          setUnreadCount(data.filter((n) => n.is_read === 0).length)
+        }
+      })
+      .catch((error) => console.error('Failed to fetch notifications:', error))
   }, [userId, enabled])
 
   useEffect(() => {

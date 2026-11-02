@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/useNotifications'
@@ -23,15 +23,6 @@ interface Service {
   price_range: string
 }
 
-interface Notification {
-  id: number
-  type: string
-  title: string
-  message: string
-  is_read: number
-  created_at: string
-}
-
 export default function CustomerDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -42,6 +33,26 @@ export default function CustomerDashboard() {
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchData = useCallback(() => {
+    return Promise.all([
+      fetch('/api/bookings'),
+      fetch('/api/services')
+    ])
+      .then(async ([bookingsRes, servicesRes]) => {
+        if (bookingsRes.ok) {
+          setBookings(await bookingsRes.json())
+        }
+
+        if (servicesRes.ok) {
+          setServices(await servicesRes.json())
+        }
+
+        refreshNotifications()
+      })
+      .catch((error) => console.error('Failed to fetch data:', error))
+      .finally(() => setLoading(false))
+  }, [refreshNotifications])
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
@@ -50,32 +61,7 @@ export default function CustomerDashboard() {
     } else if (session) {
       fetchData()
     }
-  }, [session, status, router])
-
-  const fetchData = async () => {
-    try {
-      const [bookingsRes, servicesRes] = await Promise.all([
-        fetch('/api/bookings'),
-        fetch('/api/services')
-      ])
-
-      if (bookingsRes.ok) {
-        const bookingsData = await bookingsRes.json()
-        setBookings(bookingsData)
-      }
-
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json()
-        setServices(servicesData)
-      }
-
-      refreshNotifications()
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [session, status, router, fetchData])
 
   const handleBookService = (service: Service) => {
     setSelectedService(service)

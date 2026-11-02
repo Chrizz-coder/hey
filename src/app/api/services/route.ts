@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const providerOnly = searchParams.get('provider');
 
     let query = 'SELECT * FROM services WHERE is_active = 1';
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (providerOnly === 'true') {
       query += ' AND provider_id IS NOT NULL';
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     const services = db.prepare(query).all(...params);
     return NextResponse.json(services);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
   }
 }

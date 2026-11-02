@@ -35,7 +35,7 @@ export default function SignUp() {
       } else {
         router.push('/auth/signin?registered=true')
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)

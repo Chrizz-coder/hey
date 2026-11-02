@@ -4,7 +4,7 @@ import db from '@/lib/db'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -12,7 +12,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const bookingId = parseInt(params.id)
+    const bookingId = parseInt((await params).id)
     const body = await request.json()
     const { status } = body
 
@@ -21,7 +21,7 @@ export async function PUT(
     }
 
     // Get booking details
-    const booking = db.prepare('SELECT customer_id, provider_id FROM bookings WHERE id = ?').get(bookingId) as any
+    const booking = db.prepare('SELECT customer_id, provider_id FROM bookings WHERE id = ?').get(bookingId) as { customer_id: number; provider_id: number } | undefined
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }

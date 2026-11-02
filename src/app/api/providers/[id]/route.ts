@@ -3,10 +3,10 @@ import db from '@/lib/db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const providerId = parseInt(params.id);
+    const providerId = parseInt((await params).id);
 
     const provider = db.prepare(`
       SELECT p.*, s.name as service_name, s.icon as service_icon 
@@ -20,7 +20,7 @@ export async function GET(
     }
 
     return NextResponse.json(provider);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch provider' }, { status: 500 });
   }
 }
